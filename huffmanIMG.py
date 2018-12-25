@@ -40,7 +40,7 @@ class huffman():
             b.append(int(byte, 2))
         return b
 
-    def encode(self, path):
+    def encode(self, path, out_path):
         #Read image
         img = cv2.imread(path)
         _shape = img.shape
@@ -66,7 +66,7 @@ class huffman():
             heapq.heappush(heap, [lo[0] + hi[0]] + lo[1:] + hi[1:])
         huff = sorted(heapq.heappop(heap)[1:], key=lambda p: (len(p[-1]), p))
         _dict = [_shape, huff]
-        np.save(path + "_dict.npy", _dict)
+        np.save(out_path.replace(".bin", "") + "_dict.npy", _dict)
 
         #print enCode data
         for hu in huff:
@@ -78,20 +78,20 @@ class huffman():
             en_code += code[t]
             arr += code[t]
 
-        f = open(path+"_zip.bin", "wb")
+        f = open(out_path, "wb")
         padded_encoded_text = self.pad_encoded_text(en_code)
         b = self.get_byte_array(padded_encoded_text)
         f.write(bytes(b))
         f.close()
 
 
-    def decode(self, path):
+    def decode(self, path, out_path):
         #Load data
-        path = path.replace("_zip.bin", "")
+        path = path.replace(".bin", "")
         _dict = np.load(path+"_dict.npy")
         _shape = _dict[0]
         huff = _dict[1]
-        with open(path+"_zip.bin", "rb") as file:
+        with open(path+".bin", "rb") as file:
             bit_string = ""
 
             byte = file.read(1)
@@ -132,18 +132,19 @@ class huffman():
 
         de_code = np.array(de_code)
         de_code = np.reshape(de_code, _shape)
-        cv2.imwrite(path+"_unzip.bmp", de_code)
+        cv2.imwrite(out_path, de_code)
 
 if __name__ == '__main__':
-    if (len(sys.argv) != 3):
-        print("Usage: python huffmanIMG [encode, decode] <filename>")
+    if (len(sys.argv) != 4):
+        print("Usage: python huffmanIMG [encode, decode] <input_name> <output_name>")
     else:
         comand = sys.argv[1]
         file_name = sys.argv[2]
+        out_file = sys.argv[3]
         c = huffman()
         if (comand == "encode"):
-            c.encode(file_name)
+            c.encode(file_name, out_file)
         elif (comand == "decode"):
-            c.decode(file_name)
+            c.decode(file_name, out_file)
         else:
-            print("Usage: python huffmanIMG [encode, decode] <filename>")
+            print("Usage: python huffmanIMG [encode, decode] <input_name> <output_name>")
